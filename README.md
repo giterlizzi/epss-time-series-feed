@@ -4,8 +4,9 @@
 > The EPSS timeseries for CVEs are now available at https://epss.giterlizzi.dev.
 > - **Old URL** `https://raw.githubusercontent.com/giterlizzi/epss-time-series-feed/refs/heads/main`
 > - **New URL** `https://epss.giterlizzi.dev`
+> Update your scripts to use the new base URL.
 
-This repository contains all EPSS (Exploit Prediction Scoring System) values calculated for each CVE.
+This project provides a historical EPSS (Exploit Prediction Scoring System) time series for each CVE.
 
 # About EPSS
 
@@ -32,8 +33,7 @@ Each CVE gets its own EPSS file, e.g., `CVE-1999-0001.epss`. Here, each file is 
 │   ├── CVE-2000-00xx
 │   ├── CVE-2000-01xx
 │   └── [...]
-├── [...]
-└── VERSION
+└── [...]
 ```
 
 ## Feed file format
@@ -71,6 +71,12 @@ date,model,epss,percentile
 
 ## Usage
 
+### Clone the Repository (without Git History)
+
+```
+git clone --depth 1 -b main https://github.com/giterlizzi/epss-time-series-feed.git
+```
+
 ### Fetch all EPSS data for a single CVE
 
 ```
@@ -79,7 +85,7 @@ curl https://epss.giterlizzi.dev/CVE-2021/CVE-2021-442xx/CVE-2021-44228.epss
 
 ### Plot data with Gnuplot
 
-Create the `epss.gnuplot` file:
+Create or download [epss.gnuplot](https://epss.giterlizzi.dev/doc/epss.gnuplot) file:
 
 ```gnuplot
 input_file  = sprintf('%s.epss', cve_id)
@@ -120,7 +126,69 @@ Execute `gnuplot` command:
 gnuplot -e "cve_id='CVE-2021-44228'" epss.gnuplot
 ```
 
-![CVE-2021-44228](https://epss.giterlizzi.dev/doc/CVE-2021-44228-epss.png)
+![CVE-2021-44228](https://epss.giterlizzi.dev/doc/CVE-2021-44228-gnuplot.png)
+
+## DuckDB
+
+Retrieve EPSS values for the last 30 days for a given CVE:
+
+```
+SELECT * FROM read_csv_auto('https://epss.giterlizzi.dev/CVE-2021/CVE-2021-442xx/CVE-2021-44228.epss')
+WHERE date >= CURRENT_DATE - INTERVAL '30 days'
+ORDER BY date;
++------------+---------+---------+------------+
+│    date    │  model  │  epss   │ percentile │
+│    date    │ varchar │ double  │   double   │
++------------+---------+---------+------------+
+│ 2026-01-26 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-01-27 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-01-28 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-01-29 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-01-30 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-01-31 │ v4      │ 0.94358 │    0.99958 │
+│ 2026-02-01 │ v4      │ 0.94358 │     0.9996 │
+│ 2026-02-02 │ v4      │ 0.94358 │     0.9996 │
+│ 2026-02-03 │ v4      │ 0.94358 │     0.9996 │
+│ 2026-02-04 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-05 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-06 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-07 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-08 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-09 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-10 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-11 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-12 │ v4      │ 0.94358 │     0.9996 │
+│ 2026-02-13 │ v4      │ 0.94358 │     0.9996 │
+│ 2026-02-14 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-15 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-16 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-17 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-18 │ v4      │  0.9445 │     0.9999 │
+│ 2026-02-19 │ v4      │  0.9445 │     0.9999 │
+│ 2026-02-20 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-21 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-22 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-23 │ v4      │ 0.94358 │    0.99959 │
+│ 2026-02-24 │ v4      │ 0.94358 │    0.99959 │
++------------+---------+---------+------------+
+│ 30 rows                           4 columns │
++---------------------------------------------+
+```
+
+#### Plot data with DuckDB + youlot
+
+DuckDB can be used with CLI graphing tools to quickly pipe input to stdout to graph your data in one line.
+
+[YouPlot](https://github.com/red-data-tools/YouPlot) is a Ruby-based CLI tool for drawing visually pleasing plots on the terminal. It can accept input from other programs by piping data from stdin. It takes tab-separated (or delimiter of your choice) data and can easily generate various types of plots including bar, line, histogram and scatter.
+
+With DuckDB, you can write to the console (stdout) by using the TO `/dev/stdout` command. And you can also write comma-separated values by using `WITH (FORMAT csv, HEADER)`.
+
+```
+duckdb -s "COPY (SELECT date, epss FROM read_csv('https://epss.giterlizzi.dev/CVE-2021/CVE-2021-442xx/CVE-2021-44228.epss') ORDER BY date) TO '/dev/stdout' WITH (FORMAT csv, HEADER)"
+    | youplot line -d, -H -t "EPSS for CVE-2021-44228"
+```
+
+![CVE-2021-44228](https://epss.giterlizzi.dev/doc/CVE-2021-44228-youplot.png)
 
 ## Non-Endorsement Clause
 
