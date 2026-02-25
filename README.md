@@ -32,7 +32,8 @@ Each CVE gets its own EPSS file, e.g., `CVE-1999-0001.epss`. Here, each file is 
 │   ├── CVE-2000-00xx
 │   ├── CVE-2000-01xx
 │   └── [...]
-└── [...]
+├── [...]
+└── VERSION
 ```
 
 ## Feed file format
@@ -70,19 +71,13 @@ date,model,epss,percentile
 
 ## Usage
 
-### Clone the Repository (without Git History)
-
-```
-git clone --depth 1 -b main https://github.com/giterlizzi/epss-time-series-feed.git
-```
-
 ### Fetch all EPSS data for a single CVE
 
 ```
 curl https://epss.giterlizzi.dev/CVE-2021/CVE-2021-442xx/CVE-2021-44228.epss
 ```
 
-#### Plot data with Gnuplot
+### Plot data with Gnuplot
 
 Create the `epss.gnuplot` file:
 
